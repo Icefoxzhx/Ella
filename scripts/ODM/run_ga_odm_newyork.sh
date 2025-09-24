@@ -1,4 +1,4 @@
-python ViCo/env.py --head_less \
+python odm.py --head_less \
 --output_dir output/odm \
 --multi_process \
 --skip_avatar_animation \
@@ -9,4 +9,5 @@ python ViCo/env.py --head_less \
 --config agents_num_15 \
 --agent_type generative_agent \
 --max_seconds 32400 \
---save_per_seconds 5
+--save_per_seconds 10 \
+--lm_id gpt-35-turbo

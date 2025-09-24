@@ -130,7 +130,7 @@ if __name__ == '__main__':
 		debug=args.debug,
 		batch_renderer=args.batch_renderer,
 	)
-	from agents import AgentProcess, get_agent_cls_ella
+	from agents import AgentProcess, get_agent_cls
 	agents = []
 	for i in range(args.num_agents):
 		basic_kwargs = dict(
@@ -142,8 +142,12 @@ if __name__ == '__main__':
 			logging_level = args.logging_level,
 			multi_process = args.multi_process
 		)
-		agent_cls = get_agent_cls_ella(agent_type=args.agent_type)
-		agents.append(AgentProcess(agent_cls, **basic_kwargs))
+		llm_kwargs = dict(
+			lm_source=args.lm_source,
+			lm_id=args.lm_id,
+		)
+		agent_cls = get_agent_cls(agent_type=args.agent_type)
+		agents.append(AgentProcess(agent_cls, **basic_kwargs, **llm_kwargs))
 
 	if args.multi_process:
 		gs.logger.info("Start agent processes")

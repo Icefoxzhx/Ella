@@ -1,0 +1,14 @@
+python odm.py --head_less \
+--multi_process \
+--skip_avatar_animation \
+--enable_gt_segmentation \
+--output_dir output/odm \
+--scene NY \
+--outdoor_objects_max_num 2 \
+--resolution 512 \
+--num_agents 15 \
+--config agents_num_15 \
+--agent_type generative_agent \
+--max_seconds 32400 \
+--save_per_seconds 10 \
+--lm_id gpt-35-turbo

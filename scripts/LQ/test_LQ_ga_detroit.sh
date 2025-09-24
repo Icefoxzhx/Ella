@@ -9,4 +9,5 @@ python ControlledFinals/LeadershipQuest.py --head_less \
 --config agents_num_15 \
 --agent_type generative_agent \
 --max_seconds 10800 \
---save_per_seconds 10
+--save_per_seconds 10 \
+--lm_id gpt-35-turbo

@@ -10,4 +10,5 @@ python ControlledFinals/InfluenceBattle.py --head_less \
 --config agents_num_15 \
 --agent_type generative_agent \
 --max_seconds 21600 \
---save_per_seconds 10
+--save_per_seconds 10 \
+--lm_id gpt-35-turbo
