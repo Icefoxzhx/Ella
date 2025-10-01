@@ -5,7 +5,7 @@ python odm.py --head_less \
 --scene NY \
 --resolution 512 \
 --num_agents 15 \
---config agents_num_15_with_schedules \
+--config agents_num_15 \
 --agent_type ella \
 --max_seconds 32400 \
 --save_per_seconds 10 \

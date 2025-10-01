@@ -259,7 +259,4 @@ class VolumeGridBuilder:
     def __del__(self):
         self.close()
 
-if __name__ == '__main__':
-    a = VolumeGridBuilder(conf=VolumeGridBuilderConfig(voxel_size=0.025))
-    a.load("output/NY_agents_num_15_with_schedules_demo1/replay_agent/curr_sim/Elizabeth Mensah/semantic_memory/open space/volume_grid.pkl")
-    a.visualize()
+

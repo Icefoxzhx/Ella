@@ -108,13 +108,3 @@ class DINOWrapper:
         if unbatched:
             return ret[0]
         return ret
-
-
-if __name__ == "__main__":
-    import cv2
-    import os
-    dino = DINOWrapper()
-    rgb = cv2.imread("/work/pi_chuangg_umass_edu/icefox/Ella/output/newyork_agents_test_react_num_2/ella/curr_sim/Elon Musk/episodic_memory/img_October 01, 2024, 17:16:00.png")[:, :, ::-1]
-    boxes, phrases, annotate = dino.predict(rgb, ['black', 'business suit', 'cocktail dress', 'dress', 'man', 'stand', 'suit', 'tie', 'wear'], annotate=True)
-    print(boxes, phrases)
-    Image.fromarray(annotate).save(f"_dino.png")

@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
 	### Agent configurations
 	parser.add_argument("--num_agents", type=int, default=15)
-	parser.add_argument("--config", type=str, default='agents_num_15_with_schedules')
+	parser.add_argument("--config", type=str, default='agents_num_15')
 	parser.add_argument("--agent_type", type=str, default='ella')
 	parser.add_argument("--detect_interval", type=int, default=1)
 	parser.add_argument("--region_layer", action='store_true')

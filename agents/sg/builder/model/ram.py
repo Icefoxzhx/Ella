@@ -39,9 +39,3 @@ class RAMWrapper:
         if unbatched:
             return ret[0]
         return ret
-
-if __name__ == "__main__":
-    model = RAMWrapper()
-    image_path = "ViCo/assets/imgs/indoor_scenes/dormitory-0_ego.png"
-    image = np.array(Image.open(image_path).convert("RGB"))
-    print(model.predict(image))

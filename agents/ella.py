@@ -1250,31 +1250,3 @@ Current date: {self.get_curr_date()}"""
 		self.scratch['last_enter_bus_time'] = self.last_enter_bus_time.strftime("%B %d, %Y, %H:%M:%S") if self.last_enter_bus_time is not None else None
 		self.scratch['chatting_buffer'] = [chat.to_dict() for chat in self.chatting_buffer]
 		super().save_scratch()
-
-if __name__ == '__main__':
-	config = json.load(open("ViCo/assets/scenes/DETROIT/agents_num_15_with_schedules/config.json", "r"))
-	agent_id = 0
-	from vico.agents import AgentLogger
-	# global_model_manager.init(local=True)
-	logger = AgentLogger(config["agent_names"][agent_id], "info","a.log")
-
-	agent = EllaAgent(name=config["agent_names"][agent_id], pose=config["agent_poses"][agent_id], info=config["agent_infos"][agent_id],
-					  sim_path="ViCo/assets/scenes/DETROIT/agents_num_15_with_schedules", no_react=False, debug=True, logger=logger, lm_source='azure', lm_id='gpt-4o',
-					  detect_interval=-1)
-	# agent.scratch["daily_requirement"] = f"My group {agent.scratch['groups'][0]['name']} is organizing a party at {agent.scratch['groups'][0]['place']} from 14:30:00 to 15:00:00 today. I need to go around the city, find and invite people outside of my group to attend our party today."
-	# agent.scratch["currently"] = agent.scratch["daily_requirement"]
-	# agent.hourly_schedule = agent.generate_hourly_schedule()
-	# adjusted_schedule = agent.generate_adjusted_schedule("There is no person at the place.", [
-	# 	{
-	# 		"event_type": "conversation",
-	# 		"event_time": "08:50:00",
-	# 		"event_place": "Open Space",
-	# 		"event_keywords": ["conversation", "someone"],
-	# 		"event_description": "taylor invited to me attent their group's party at Pulse Music from 8:30 PM to 9:00 PM."
-	# 	}])
-	agent.set_curr_time(datetime.strptime("2022-01-01 15:00:01", "%Y-%m-%d %H:%M:%S"))
-	print(agent.hourly_schedule[agent.curr_schedule_idx])
-	agent.generate_commute_plan()
-	# agent.parse_json("test", "\"option\": \"engage in a conversation\", \"target\": \"someone\"", last_call=False)
-	# with open(f"ViCo/assets/scenes/DETROIT/agents_test_react_num_2/hourly_schedule_{config['agent_names'][agent_id]}.json", "w") as f:
-	# 	json.dump(hourly_schedule, f, indent=2)

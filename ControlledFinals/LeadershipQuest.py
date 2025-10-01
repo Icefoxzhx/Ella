@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
 	### Agent configurations
 	parser.add_argument("--num_agents", type=int, default=15)
-	parser.add_argument("--config", type=str, default='agents_num_15_with_schedules')
+	parser.add_argument("--config", type=str, default='agents_num_15')
 	parser.add_argument("--agent_type", type=str, default='ella')
 	parser.add_argument("--detect_interval", type=int, default=1)
 	parser.add_argument("--region_layer", action='store_true')
@@ -127,8 +127,8 @@ if __name__ == '__main__':
 
 		groups_data = config['groups']
 		place_metadata = json.load(open(os.path.join(config_path, 'place_metadata.json'),'r'))
-		building_metadata = json.load(open(os.path.join('ViCo/assets/scenes', args.scene.upper(), 'building_metadata.json'),'r'))
-		terrain_height_field = load_height_field(os.path.join(gs.utils.get_assets_dir(), scene_assets_dir, "height_field.npz"))
+		building_metadata = json.load(open(os.path.join(config_path, 'building_metadata.json'),'r'))
+		terrain_height_field = load_height_field(os.path.join(gs.utils.get_assets_dir(), "ViCo/scenes/v1", args.scene, "height_field.npz"))
 		goods_categories = ['Fresh Produce', 'Dairy & Meat', 'Beverages', 'Snacks']
 		random.seed(args.seed)
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 		# set daily requirements
 		initial_agent_pos = []
 		num_agents = len(config["agent_names"])
-		coarse_indoor_scene = json.load(open("ViCo/modules/indoor_scenes/coarse_type_to_indoor_scene.json", 'r'))
+		coarse_indoor_scene = json.load(open("vico/assets/coarse_type_to_indoor_scene.json", 'r'))
 		room_agents = {}
 		for i, agent_name in enumerate(config["agent_names"]):
 			agent_scratch_path = os.path.join(config_path, agent_name, "scratch.json")
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 					indoor_y += math.sin(i * 2 * math.pi / num_agents) * 2 + room['top'] + room['height'] / 2
 					config['agent_poses'][i] = [indoor_x, indoor_y, indoor_z, 0.0, 0.0, i * 2 * math.pi / num_agents + math.pi]
 				else:
-					with pathlib.Path(f"./ViCo/modules/indoor_scenes/scenes/{indoor_scene}.json").open("r", encoding="utf-8") as f:
+					with pathlib.Path(f"./vico/modules/indoor_scenes/scenes/{indoor_scene}.json").open("r", encoding="utf-8") as f:
 						data = json.load(f)
 					offset = np.array(place['location'])
 					cnt = room_agents.get(indoor_scene, 0)

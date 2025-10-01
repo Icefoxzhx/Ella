@@ -120,7 +120,7 @@ def evaluate_LQ(output_path, max_steps=10800):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", "-d", type=str, default="output/CF/IB/newyork_agents_num_15_with_schedules/ella")
+    parser.add_argument("--data_dir", "-d", type=str, default="output/CF/IB/newyork_agents_num_15/ella")
     parser.add_argument("--challenge", "-c", type=str, required=True)
     parser.add_argument("--scenes", "-s", type=str, nargs="+", default=["newyork"])
     parser.add_argument("--agents", "-a", type=str, nargs="+", default=["ella"])

@@ -719,31 +719,3 @@ class EpisodicMemory:
 
 	def __repr__(self):
 		return self.__str__()
-
-
-if __name__ == "__main__":
-	# test episodic memory
-	storage_path = "/work/pi_chuangg_umass_edu/icefox/Ella/output/DETROIT_agents_num_15_with_schedules/ella/curr_sim/Eve By J Gonzales/episodic_memory"
-	lm_source = "azure"
-	debug = True
-	logger = None
-
-	episodic_memory = EpisodicMemory(storage_path, lm_source, debug, logger)
-	# import pdb; pdb.set_trace()
-	curr_time = datetime.now()
-	pose = [0, 0, 0]
-	img = np.array(Image.open(os.path.join(storage_path, "img_October 01, 2024, 09:00:00.png")))
-	retrieved_event = episodic_memory.retrieve("important things to react to", img, curr_time, pose[:3], 3)
-	# event_time = datetime.now()
-	# event_position = [0, 0, 0]
-	# event_place = "home"
-	# event_keywords = ["test", "event"]
-	# event_img = None
-	# event_description = "This is a test event."
-	# event_text_ft = None
-	# event_poignancy = 4
-	# event_expiration = datetime.now() + timedelta(days=1)
-	#
-	# episodic_memory.add_memory("test_event", event_time, event_position, event_place, event_keywords, event_img, event_description, event_text_ft, event_poignancy, event_expiration)
-	# retrieved_event = episodic_memory.retrieve_memory_by_time(event_time)
-	print(retrieved_event)
