@@ -12,10 +12,9 @@ import genesis as gs
 current_directory = os.getcwd()
 sys.path.insert(0, current_directory)
 
-from vico.tools.constants import old_scene_to_new_scene
-
 from vico.env import VicoEnv
 from vico.modules import *
+from vico.tools.constants import ASSETS_PATH
 from vico.tools.utils import get_height_at, load_height_field
 
 
@@ -150,7 +149,7 @@ if __name__ == '__main__':
 		# set daily requirements
 		initial_agent_pos = []
 		num_agents = len(config["agent_names"])
-		coarse_indoor_scene = json.load(open("vico/assets/coarse_type_to_indoor_scene.json", 'r'))
+		coarse_indoor_scene = json.load(open(os.path.join(ASSETS_PATH, "coarse_type_to_indoor_scene.json"), 'r'))
 		room_agents = {}
 		for i, agent_name in enumerate(config["agent_names"]):
 			agent_scratch_path = os.path.join(config_path, agent_name, "scratch.json")
@@ -165,24 +164,17 @@ if __name__ == '__main__':
 			place = place_metadata[group_place]
 			indoor_x, indoor_y, indoor_z = place['location']
 			if group_building != "open space" and 'scene' in place:
-				indoor_scene = place['scene']
-				if indoor_scene in old_scene_to_new_scene:
-					cat, idx = old_scene_to_new_scene[indoor_scene]
-					indoor_scene = coarse_indoor_scene[cat][idx]
-				if indoor_scene.endswith('.json'):
-					with open(place['scene'], 'r') as f:
-						room = json.load(f)
+				indoor_scene = json.load(open(os.path.join(ASSETS_PATH, place['scene']), 'r'))
+				if indoor_scene['type'] == 'glb':
 					import math
-					indoor_x += math.cos(i * 2 * math.pi / num_agents) * 2 + room['left'] + room['width'] / 2
-					indoor_y += math.sin(i * 2 * math.pi / num_agents) * 2 + room['top'] + room['height'] / 2
+					indoor_x += math.cos(i * 2 * math.pi / num_agents) * 2 + indoor_scene['left'] + indoor_scene['width'] / 2
+					indoor_y += math.sin(i * 2 * math.pi / num_agents) * 2 + indoor_scene['top'] + indoor_scene['height'] / 2
 					config['agent_poses'][i] = [indoor_x, indoor_y, indoor_z, 0.0, 0.0, i * 2 * math.pi / num_agents + math.pi]
 				else:
-					with pathlib.Path(f"./vico/modules/indoor_scenes/scenes/{indoor_scene}.json").open("r", encoding="utf-8") as f:
-						data = json.load(f)
 					offset = np.array(place['location'])
-					cnt = room_agents.get(indoor_scene, 0)
-					room_agents[indoor_scene] = cnt + 1
-					pose = data.get("group_avatar_pos", [])[cnt]
+					cnt = room_agents.get(indoor_scene['name'], 0)
+					room_agents[indoor_scene['name']] = cnt + 1
+					pose = indoor_scene.get("group_avatar_pos", [])[cnt]
 					pos, euler = pose['pos'], pose['euler']
 					config['agent_poses'][i] = np.array([pos[0] + offset[0], pos[1] + offset[1], offset[2], euler[0], euler[1], euler[2]])
 

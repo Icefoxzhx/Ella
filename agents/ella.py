@@ -238,14 +238,14 @@ class EllaAgent(Agent):
 				if react_target is not None:
 					if self.held_objects[0] is None:
 						action = {
-							'type': 'fake_pick',
+							'type': 'pick',
 							'arg1': 0,
 							'arg2': react_target
 						}
 						self.e_mem.add_memory("action", self.curr_time, self.pose[:3], self.current_place, ['pick', react_target], None, f"Pick up {react_target} at {self.current_place}.", None)
 					elif self.held_objects[1] is None:
 						action = {
-							'type': 'fake_pick',
+							'type': 'pick',
 							'arg1': 1,
 							'arg2': react_target
 						}
@@ -271,13 +271,13 @@ class EllaAgent(Agent):
 			if self.current_place == self.scratch["groups"][0]["place"]:
 				if self.held_objects[0] is not None:
 					action = {
-						'type': 'fake_put',
+						'type': 'put',
 						'arg1': 0
 					}
 					self.logger.info(f"{self.name} is at the group place, put down the object in hand 0.")
 				elif self.held_objects[1] is not None:
 					action = {
-						'type': 'fake_put',
+						'type': 'put',
 						'arg1': 1
 					}
 					self.logger.info(f"{self.name} is at the group place, put down the object in hand 1.")
