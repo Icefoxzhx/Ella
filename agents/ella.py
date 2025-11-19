@@ -1012,7 +1012,7 @@ class EllaAgent(Agent):
 			if len(error_messages) > 0:
 				error_messages_verbalize = f"There are error messages for {self.name}'s schedule: \n" + '\n'.join(error_messages) + '\n'
 				raise Exception(error_messages_verbalize)
-			self.logger.info(f"Hourly schedule generation for {self.name} is success!")
+			self.logger.info(f"Hourly schedule generation for {self.name} succeeded!")
 			self.logger.debug(f"Hourly schedule: {hourly_schedule}")
 		except Exception as e:
 			self.logger.error(f"Error generating daily plan: {e} with traceback: {traceback.format_exc()}. Using default instead.The response was {response}")
