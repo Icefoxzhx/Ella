@@ -427,35 +427,6 @@ class EpisodicMemory:
 		with open("experience.jsonl", "a") as f:
 			f.write(json.dumps(this_experience_tojson) + "\n")
 
-	# def add_chat(self, curr_time, target_agent_name, description):
-	# 	if target_agent_name.lower() not in self.chat_history:
-	# 		self.chat_history[target_agent_name.lower()] = []
-	# 	self.chat_history[target_agent_name.lower()].append({"time": curr_time.strftime("%B %d, %Y, %H:%M:%S"), "description": description})
-	# 	with open(self.chat_history_path, 'w') as f:
-	# 		json.dump(self.chat_history, f)
-
-	def get_last_chat(self, target_agent_name):
-		for i in range(len(self.experience) - 1, -1, -1):
-			if self.experience[i].event_type == "chat":
-				print("debug: get_last_chat experience:", self.experience[i].event_keywords[0].lower(), target_agent_name.lower())
-				print("debug: get_last_chat name:", target_agent_name.lower())
-				if target_agent_name.lower() in self.experience[i].event_keywords[0].lower():
-					return {"time": self.experience[i].event_time.strftime("%B %d, %Y, %H:%M:%S"), "description": self.experience[i].event_description}
-		return None
-	
-	def get_all_chat(self, target_agent_name, max):
-		chat_descriptions = []
-		for i in range(len(self.experience) - 1, -1, -1):
-			if self.experience[i].event_type == "chat":
-				if target_agent_name.lower() in self.experience[i].event_keywords[0].lower():
-					chat_descriptions.append(self.experience[i].event_description)
-		if len(chat_descriptions) == 0:
-			return None
-		chat_history = []
-		for chat_description in chat_descriptions:
-			chat_history.append({"time": self.experience[i].event_time.strftime("%B %d, %Y, %H:%M:%S"), "description": chat_description})
-		return chat_history[-max:]
-
 	def add_memory(self, event_type, event_time, event_position, event_place, event_keywords, event_img, event_description, event_text_ft, event_poignancy=None, event_expiration=None):
 		event_id = str(len(self.experience))
 		if event_poignancy is None: event_poignancy = 4
@@ -503,51 +474,8 @@ class EpisodicMemory:
 		for i, event in enumerate(events):
 			recency_out[event.event_id] = recency_vals[i]
 		return recency_out
-	#
-	def new_retrieve(self, curr_time, focal_points, focal_points_embedding, num_events):
-		# num_events for each focal point in focal_points
-		recency_w = 1
-		relevance_w = 1
-		importance_w = 1
-		retrieved = dict()
-		for focal_point_index, focal_point in enumerate(focal_points):
-			events = [[event.event_last_access_time, event] for event in self.experience]
-			events = sorted(events, key=lambda x: x[0])
-			events = [event for _, event in events]
-
-			# print("debug:new_retrieve:events:", events)
-
-			recency_out = self.extract_recency(events)
-			recency_out = min_max_normalize_dict(recency_out)
-			importance_out = self.extract_importance(events)
-			importance_out = min_max_normalize_dict(importance_out)
-			relevance_out = self.extract_text_relevance(events, focal_points_embedding[focal_point_index])
-			relevance_out = min_max_normalize_dict(relevance_out)
-
-			# print("recency_out:", recency_out)
-			# print("relevance_out2:", relevance_out)
-
-			gw = [0.5, 3, 2]
-			master_out = dict()
-			for key in recency_out.keys(): 
-				master_out[key] = (recency_w*recency_out[key]*gw[0] 
-								+ relevance_w*relevance_out[key]*gw[1] if key in relevance_out else 0 # for handling some missing embeddings
-								+ importance_w*importance_out[key]*gw[2])
-				
-			master_out = top_highest_x_values(master_out, num_events)
-			master_events_indexes = [int(key.split("node_")[1]) for key in list(master_out.keys())]
-			master_events = [self.experience[index].tojson() for index in master_events_indexes]
-
-			for index in master_events_indexes:
-				self.experience[index].event_last_access_time = curr_time
-			retrieved[focal_point] = master_events
-		
-		return retrieved
 	
-	def retrieve(self, query: str, img: Optional[np.ndarray], curr_time: datetime, pos: list[float], k: int):
-		recency_w = 0.1
-		relevance_w = 0.6
-		proximity_w = 0.3
+	def retrieve(self, query: str, img: Optional[np.ndarray], curr_time: datetime, pos: list[float], k: int, recency_w: float = 0.1, relevance_w: float = 0.6, proximity_w: float = 0.3):
 
 		recency_out = self.extract_recency()
 		recency_out = min_max_normalize_dict(recency_out)
@@ -590,20 +518,6 @@ class EpisodicMemory:
 
 		return master_events
 		
-	def retrieve_events_thoughts_by_keywords(self, events): # We use this for retrieving from perceived events
-		# We do not use the same implementation used in GA because event.description can be same for different observation ids
-		retrieved = []
-		for event in events:
-			retrieved_dict = dict()
-			retrieved_dict["curr_event"] = event
-			relevant_events = []
-			for event_keyword in event.event_keywords:
-				if event_keyword != "":
-					relevant_events.extend(self.retrieve_memory_by_keyword(event_keyword))
-			retrieved_dict["events"] = list(relevant_events)
-			retrieved.append(retrieved_dict)
-		return retrieved
-
 	def retrieve_latest_memory(self) -> list[dict]:
 		if not self.experience:
 			self.logger.warning("No event found in memory.")
