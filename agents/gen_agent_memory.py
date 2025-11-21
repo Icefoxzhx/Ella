@@ -166,8 +166,8 @@ class SemanticMemory:
         if obs['rgb'] is None:
             return 0
         cur_sg = self.get_sg(obs['current_place'])
-        if self.object_builder is not None and "gt_seg_entity_idx_to_info" in obs:
-            labels = self.object_builder.add_frame_with_gt_seg(obs['rgb'], obs['depth'], obs['segmentation'], obs['extrinsics'], obs['gt_seg_entity_idx_to_info'])
+        if self.object_builder is not None and "gt_seg_idxc_to_info" in obs:
+            labels = self.object_builder.add_frame_with_gt_seg(obs['rgb'], obs['depth'], obs['segmentation'], obs['extrinsics'], obs['gt_seg_idxc_to_info'])
             num_new_objects = len(self.object_builder.new_objects)
         elif self.detect_interval > 0 and self.num_frames % self.detect_interval == 0 and (self.last_processed_rgb is None or not np.allclose(obs['rgb'], self.last_processed_rgb)):
             self.last_processed_rgb = obs['rgb']
@@ -194,7 +194,7 @@ class SemanticMemory:
             else:
                 new_objects = self.object_builder.get_new_objects()
             for obj in new_objects:
-                if not "gt_seg_entity_idx_to_info" in obs:
+                if not "gt_seg_idxc_to_info" in obs:
                     matched_name = None
                     if obj.tag in AGENT_TAGS:
                         visual_sim = {}

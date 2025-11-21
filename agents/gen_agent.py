@@ -132,10 +132,10 @@ class GenAgent(Agent):
 					obs_seg_unique_ids = np.unique(self.obs['segmentation']).tolist()
 					img_path = None
 					for seg_id in obs_seg_unique_ids:
-						if seg_id != -1:
+						if seg_id != 0:
 							seg_id_count = np.count_nonzero(self.obs['segmentation'] == seg_id)
 							if (seg_id_count / np.array(self.obs['segmentation']).size) > 0.001:
-								seg_info = self.obs["gt_seg_entity_idx_to_info"][seg_id]
+								seg_info = self.obs["gt_seg_idxc_to_info"][seg_id]
 								seg_type = seg_info["type"]
 								seg_name = seg_info["name"]
 								kws = [seg_type + ':' + seg_name, "", ""]
@@ -358,7 +358,7 @@ class GenAgent(Agent):
 				utt, _ = self.converse(self.obs, focused_event, target_agent_state="null")
 				if self.enable_gt_segmentation:
 					entity_idx_list = []
-					for idx, info in enumerate(self.obs["gt_seg_entity_idx_to_info"]):
+					for idx, info in enumerate(self.obs["gt_seg_idxc_to_info"]):
 						if f"{info['type']}:{info['name']}" == focused_event["curr_event"].event_keywords[0]:
 							entity_idx_list.append(idx)
 					assert len(entity_idx_list) > 0

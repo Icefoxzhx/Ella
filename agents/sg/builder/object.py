@@ -339,20 +339,19 @@ class ObjectBuilder:
                     del self.objects[obj.idx]
         return labels
 
-    def add_frame_with_gt_seg(self, rgb: np.ndarray, depth: np.ndarray, segmentation: np.ndarray, camera_ext: np.ndarray, gt_seg_entity_idx_to_info):
+    def add_frame_with_gt_seg(self, rgb: np.ndarray, depth: np.ndarray, segmentation: np.ndarray, camera_ext: np.ndarray, gt_seg_idxc_to_info):
         self.new_objects.clear()
         self.curr_objects.clear()
-
         obs_seg_unique_ids = np.unique(segmentation).tolist()
         box_tags, box_names, boxes, masks = [], [], [], []
         for id in obs_seg_unique_ids:
-            if id == -1:
+            if id == 0:
                 continue
-            tag = gt_seg_entity_idx_to_info[id]["type"]
-            name = gt_seg_entity_idx_to_info[id]["name"]
+            tag = gt_seg_idxc_to_info[id]["type"]
+            name = gt_seg_idxc_to_info[id]["name"]
             if tag == "structure":
                 continue
-            box_tags.append(f"{tag}_{id}")
+            box_tags.append(f"{tag}")
             box_names.append(f"{name}")
             mask = segmentation == id
             boxes.append([mask.any(axis=0).argmax(), mask.any(axis=1).argmax(), mask.any(axis=0).shape[0] - mask.any(axis=0)[::-1].argmax(), mask.any(axis=1).shape[0] - mask.any(axis=1)[::-1].argmax()])
