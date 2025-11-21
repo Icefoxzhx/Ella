@@ -1,0 +1,17 @@
+python ControlledFinals/InfluenceBattle.py --head_less \
+--multi_process \
+--skip_avatar_animation \
+--enable_gt_segmentation \
+--output_dir output_ablate/CF/IB \
+--challenge influence_battle \
+--scene DETROIT \
+--no_load_indoor_objects \
+--outdoor_objects_max_num 2 \
+--resolution 512 \
+--num_agents 15 \
+--config agents_num_15 \
+--agent_type no_recency \
+--max_seconds 21600 \
+--save_per_seconds 10 \
+--lm_source openai \
+--lm_id gpt-4o
