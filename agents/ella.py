@@ -129,7 +129,7 @@ class EllaAgent(Agent):
 			img_path = os.path.join(self.storage_path, 'episodic_memory',
 									f'img_{self.curr_time.strftime("%B %d, %Y, %H:%M:%S")}.png')
 			Image.fromarray(obs['rgb']).save(img_path)
-			if "gt_seg_entity_idx_to_info" in obs:
+			if "gt_seg_idxc_to_info" in obs:
 				desc = f"I see {', '.join([object.name for object in curr_objects])}."
 			else:
 				desc = self.generate_captioning(
@@ -187,7 +187,7 @@ class EllaAgent(Agent):
 				img_path = os.path.join(self.storage_path, 'episodic_memory',
 										f'img_{self.curr_time.strftime("%B %d, %Y, %H:%M:%S")}.png')
 				Image.fromarray(obs['rgb']).save(img_path)
-				if "gt_seg_entity_idx_to_info" in obs:
+				if "gt_seg_idxc_to_info" in obs:
 					desc = f"I see {', '.join([object.name for object in self.s_mem.object_builder.get_curr_objects()])}."
 					kws = [object.name for object in self.s_mem.object_builder.get_curr_objects()]
 					if not kws:

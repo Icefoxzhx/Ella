@@ -129,6 +129,9 @@ if __name__ == '__main__':
 
 	os.makedirs(os.path.join(args.output_dir, "logs"), exist_ok=True)
 
+	if args.debug:
+		args.enable_third_person_cameras = True
+		
 	from tools.model_manager import global_model_manager
 	global_model_manager.init(local=True)
 
@@ -161,7 +164,7 @@ if __name__ == '__main__':
 		tm_vehicle_num=args.tm_vehicle_num,
 		tm_avatar_num=args.tm_avatar_num,
 		save_per_seconds=args.save_per_seconds,
-		defer_chat="ella" in args.agent_type,
+		defer_chat="ella" in args.agent_type or "no_" in args.agent_type,
 		debug=args.debug,
 		batch_renderer=args.batch_renderer,
 	)
