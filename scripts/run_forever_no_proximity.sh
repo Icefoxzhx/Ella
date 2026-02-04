@@ -2,7 +2,7 @@
 
 # set -x
 
-TRAIN_SCRIPT="scripts/IB/test_IB_ella_detroit.sh"
+TRAIN_SCRIPT="scripts/ablate_spatial.sh"
 while true
 do
     sleep 5

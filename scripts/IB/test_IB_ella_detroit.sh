@@ -11,4 +11,5 @@ python ControlledFinals/InfluenceBattle.py --head_less \
 --agent_type ella \
 --max_seconds 21600 \
 --save_per_seconds 10 \
+--lm_source openai \
 --lm_id gpt-4o
