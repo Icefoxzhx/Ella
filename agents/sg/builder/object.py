@@ -346,7 +346,7 @@ class ObjectBuilder:
                 continue
             tag = gt_seg_idxc_to_info[id]["type"]
             name = gt_seg_idxc_to_info[id]["name"]
-            if tag == "structure":
+            if tag in ["structure", "avatar_box"]:
                 continue
             box_tags.append(f"{tag}")
             box_names.append(f"{name}")
@@ -395,10 +395,23 @@ class ObjectBuilder:
                     continue
 
                 merge_obj_idx = None
-                for obj in objects:
-                    if obj.tag == cur_obj.tag:
-                        merge_obj_idx = obj.idx
-                        break
+                is_dynamic = cur_obj.tag in DYNAMIC_OBJECTS
+                
+                if is_dynamic:
+                    # For dynamic objects: use name match only (they move around)
+                    for i, obj in enumerate(objects):
+                        if obj.name == cur_obj.name:
+                            merge_obj_idx = i
+                            break
+                else:
+                    # For static objects: use name match AND spatial overlap
+                    best_overlap = 0
+                    for i, obj in enumerate(objects):
+                        if obj.name == cur_obj.name:
+                            overlap = cur_obj.get_overlap(obj)
+                            if overlap > 0.1 and overlap > best_overlap:
+                                best_overlap = overlap
+                                merge_obj_idx = i
 
                 if merge_obj_idx is not None:
                     self.logger.debug(f"Merge object: {cur_obj} into {objects[merge_obj_idx]}")
