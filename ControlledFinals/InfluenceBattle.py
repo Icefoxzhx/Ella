@@ -74,7 +74,7 @@ if __name__ == '__main__':
 	parser.add_argument("--region_layer", action='store_true')
 
 	parser.add_argument("--lm_source", type=str, choices=["openai", "azure", "huggingface", "local"]
-						, default="azure", help="language model source")
+						, default="openai", help="language model source")
 	parser.add_argument("--lm_id", "-lm", type=str, default="gpt-4o", help="language model id")
 
 	args = parser.parse_args()
