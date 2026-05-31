@@ -279,7 +279,11 @@ if __name__ == '__main__':
 		)
 
 		agent_cls = get_agent_cls(agent_type=args.agent_type)
-		agents.append(AgentProcess(agent_cls, **basic_kwargs, **llm_kwargs))
+		model_kwargs = {}
+		if "ella" in args.agent_type or "generative_agent" in args.agent_type or "m3_agent" in args.agent_type:
+			model_kwargs = dict(model_channel=global_model_manager._channel,
+								model_device=global_model_manager.device)
+		agents.append(AgentProcess(agent_cls, **basic_kwargs, **llm_kwargs, **model_kwargs))
 
 
 	if args.multi_process:

@@ -7,7 +7,7 @@ python odm.py --head_less \
 --outdoor_objects_max_num 2 \
 --resolution 512 \
 --num_agents 15 \
---config agents_num_15 \
+--config agents_num_15_with_schedules \
 --agent_type ella_seg \
 --max_seconds 32400 \
 --save_per_seconds 10 \

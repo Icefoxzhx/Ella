@@ -221,8 +221,10 @@ class M3Agent(Agent):
             "\n\nGenerate 1-2 concise high-level insights that generalize across these. "
             "One insight per line, no prefix."
         )
+        self.logger.debug(f"[m3_semantic_mem] prompt:\n{prompt}")
         try:
             response = self.generator.generate(prompt, caller="m3_semantic_mem")
+            self.logger.debug(f"[m3_semantic_mem] response:\n{response}")
             for insight in response.strip().split('\n')[:2]:
                 insight = insight.strip()
                 if not insight:
@@ -297,8 +299,10 @@ class M3Agent(Agent):
             "[NAVIGATE] <place_name>    (must be from Available places list)\n"
             "[STAY]"
         )
+        self.logger.debug(f"[m3_decide] prompt:\n{prompt}")
         try:
             response = self.generator.generate(prompt, caller="m3_decide").strip()
+            self.logger.debug(f"[m3_decide] response:\n{response}")
         except Exception as e:
             self.logger.warning(f"Decision failed: {e}")
             return "stay", ""
@@ -327,8 +331,11 @@ class M3Agent(Agent):
             + (f"Context from memory: {mem_ctx}\n" if mem_ctx else "") +
             "Generate a brief, natural party invitation (1-2 sentences). No prefix."
         )
+        self.logger.debug(f"[m3_utterance] prompt:\n{prompt}")
         try:
-            return self.generator.generate(prompt, caller="m3_utterance").strip()
+            response = self.generator.generate(prompt, caller="m3_utterance").strip()
+            self.logger.debug(f"[m3_utterance] response:\n{response}")
+            return response
         except Exception as e:
             self.logger.warning(f"Utterance generation failed: {e}")
             return f"Hi {target_name}, would you like to join our party?"
@@ -347,6 +354,7 @@ class M3Agent(Agent):
             self.logger.warning(f"{self.name}: could not find place '{action_content}', picking random.")
             candidates = self._get_available_places()
             if not candidates:
+                self.logger.warning(f"{self.name}: no available places in knowledge base, cannot plan goal.")
                 return
             import random
             place_name = random.choice(candidates)
