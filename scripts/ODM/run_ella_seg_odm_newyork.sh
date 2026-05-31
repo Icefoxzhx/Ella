@@ -11,5 +11,5 @@ python odm.py --head_less \
 --config agents_num_15_with_schedules \
 --agent_type ella_seg \
 --max_seconds 32400 \
---save_per_seconds 2 \
+--save_per_seconds 10 \
 --lm_id gpt-4o

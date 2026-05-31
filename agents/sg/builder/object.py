@@ -108,7 +108,7 @@ class Object:
         for i, appearance in enumerate(self.appearance_list):
             atomic_save(os.path.join(path, f"appearance_{i}.png"), Image.fromarray(appearance.rgb))
 
-        atomic_save(os.path.join(path, "tag.txt"), self.tag)
+        atomic_save(os.path.join(path, "name.txt"), self.name)
         self.volume_grid_builder.save(os.path.join(path, "volume_grid.pkl"))
         self.not_saved = False
 
@@ -256,7 +256,7 @@ class ObjectBuilder:
                     continue
                 label = np.where(mask, 0, -100)
                 points, colors, _ = VolumeGridBuilder._img_to_pcd(rgb, depth, label, self.fov, camera_ext)
-                obj = Object(0, points, colors, appearance, tag, image_ft, self.conf, self.num_frames)
+                obj = Object(0, points, colors, appearance, tag, image_ft, self.conf, self.num_frames, name=tag)
                 if obj.denoise(self.conf.denoise_param) < 5:
                     areas.append(0)
                     cur_objects.append(None)
