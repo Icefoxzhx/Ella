@@ -7,6 +7,9 @@ def get_agent_cls(agent_type, robot_type=None):
     if 'generative_agent' in agent_type:
         from .gen_agent import GenAgent
         return GenAgent
+    if 'm3_agent' in agent_type:
+        from .m3_agent import M3Agent
+        return M3Agent
     # Fall back to vico's built-in agent types
     from vico.agents import get_agent_cls as vico_get_agent_cls
     return vico_get_agent_cls(agent_type, robot_type=robot_type)

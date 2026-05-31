@@ -24,3 +24,4 @@ Genesis/**/*.pkl
 a.log
 chat_raw.jsonl
 *.code-workspace
+logs/

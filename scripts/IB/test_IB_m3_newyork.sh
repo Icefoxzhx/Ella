@@ -1,7 +1,6 @@
 python ControlledFinals/InfluenceBattle.py --head_less \
 --multi_process \
 --skip_avatar_animation \
---enable_gt_segmentation \
 --output_dir output/CF/IB \
 --challenge influence_battle \
 --scene NY \
@@ -9,7 +8,7 @@ python ControlledFinals/InfluenceBattle.py --head_less \
 --resolution 512 \
 --num_agents 15 \
 --config agents_num_15_with_schedules \
---agent_type ella_seg \
+--agent_type m3_agent \
 --max_seconds 21600 \
 --save_per_seconds 10 \
 --lm_id gpt-4o
