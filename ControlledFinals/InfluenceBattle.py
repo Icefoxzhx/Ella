@@ -5,6 +5,15 @@ import random
 import shutil, errno
 from datetime import datetime, timedelta
 
+import subprocess
+_gpu_cap = subprocess.run(
+    ['nvidia-smi', '--query-gpu=compute_cap', '--format=csv,noheader'],
+    capture_output=True, text=True,
+)
+if _gpu_cap.returncode == 0:
+    _sm = _gpu_cap.stdout.strip().split('\n')[0].replace('.', '')
+    os.environ.setdefault('TI_OFFLINE_CACHE_FILE_PATH', os.path.expanduser(f'~/.cache/taichi_sm{_sm}'))
+
 import genesis as gs
 
 from vico.env import VicoEnv
