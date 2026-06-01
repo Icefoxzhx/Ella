@@ -1,4 +1,5 @@
 python ControlledFinals/InfluenceBattle.py --head_less \
+--backend cpu \
 --multi_process \
 --skip_avatar_animation \
 --output_dir output/CF/IB \
