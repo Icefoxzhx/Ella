@@ -1,3 +1,6 @@
+import ast
+import base64
+import json
 import sys
 import os
 import types
@@ -5,6 +8,8 @@ import importlib.util
 import pickle
 import numpy as np
 from datetime import datetime, timedelta
+from io import BytesIO
+from PIL import Image
 
 _M3_DIR = '/scratch/workspace/hongxinzhang_umass_edu-shared/m3-agent'
 
@@ -17,7 +22,6 @@ def _load_videograph():
         pkg.__package__ = 'mmagent'
         sys.modules['mmagent'] = pkg
 
-    # Stub parse_video_caption (only used for face/voice entity parsing, not needed for IB)
     if 'mmagent.memory_processing' not in sys.modules:
         stub = types.ModuleType('mmagent.memory_processing')
         stub.parse_video_caption = lambda _graph, _caption: []
@@ -49,8 +53,42 @@ from .sg.builder.object import AGENT_TAGS
 from .gen_agent_memory import SemanticMemory
 
 
+_PROMPT_CAPTIONS = """You are given a sequence of egocentric observation frames from a simulated city environment, along with transcribed speech segments from nearby characters. Each voice feature is identified by a unique ID enclosed in angle brackets (e.g., <voice_1>, <voice_2>).
+
+Your Task:
+Generate a detailed description of the current 30-second clip. Each item must be a single atomic event or detail covering: characters' actions and movements, spoken dialogue, contextual behavior, or scene context.
+
+Strict Requirements:
+- If a character has an associated voice ID, refer to them only using that ID (e.g., <voice_1>).
+- If a character does not have a voice ID, use a short descriptive phrase.
+- Each description must represent a single atomic event. Do not combine multiple unrelated aspects into one line.
+- Do not use pronouns. Do not invent events not grounded in the observations.
+- Return only a valid JSON list of strings (starting with "[" and ending with "]").
+
+Voice features:
+"""
+
+_PROMPT_THINKINGS = """You are given a sequence of egocentric observation frames from a simulated city environment, transcribed speech segments, and a list of clip descriptions. Each voice feature has a unique ID in angle brackets (e.g., <voice_1>).
+
+Your Task:
+Generate high-level reasoning-based conclusions across these categories:
+1. Character-Level Attributes: inferred personality, role, interests, or distinctive behaviors for each character.
+2. Interpersonal Relationships & Dynamics: relationships, tone, power dynamics, cooperation or conflict.
+3. Scene-Level Summary: main event or theme, overall tone, cause-effect dynamics.
+4. Contextual & General Knowledge: setting, cultural norms, or real-world facts inferable from the scene (e.g., "Alice market is pet-friendly").
+
+Strict Requirements:
+- Refer to characters only by their voice ID if available.
+- Do not restate simple observations from the descriptions. Focus on high-level conclusions.
+- Return only a valid JSON list of strings (starting with "[" and ending with "]").
+
+Voice features:
+"""
+
+
 class M3Agent(Agent):
-    SEMANTIC_TRIGGER = 10
+    CLIP_SECONDS = 30
+    MAX_FRAMES_PER_CLIP = 5
 
     def __init__(self, name, pose, info, sim_path, no_react=False, debug=False, logger=None,
                  lm_source='azure', lm_id='gpt-4o', max_tokens=4096, temperature=0, top_p=1.0,
@@ -125,8 +163,13 @@ class M3Agent(Agent):
         self.cur_objects = []
         self.nearby_agents = []
         self.sim_step = 0
-        self.pending_episodic_count = 0
         self._prev_place = self.current_place
+
+        # 30-second memorization buffer
+        self._clip_frames = []      # list of PIL.Image
+        self._clip_speech = {}      # agent_name -> list of {start_offset, end_offset, utterance}
+        self._clip_start_time = None
+        self._clip_id = 0
 
     # ── Character Nodes ──────────────────────────────────────────────────────
 
@@ -182,61 +225,91 @@ class M3Agent(Agent):
                     return obs['rgb'][y1:y2, x1:x2]
         return None
 
-    # ── Episodic & Semantic Memory ────────────────────────────────────────────
+    # ── Memorization (30-second clip pipeline) ───────────────────────────────
 
-    def _add_episodic_memory(self, text, clip_id, agent_names=None):
-        """Embed text and store as episodic node; link to character nodes."""
-        if agent_names is None:
-            agent_names = []
-
-        emb = np.array(self.generator_embedding.get_embedding(text, caller="m3_epi_emb"))
+    def _add_memory_node(self, text, clip_id, node_type, voice_id_to_name):
+        """Embed text, store as a memory node, and link to known character nodes."""
+        emb = np.array(self.generator_embedding.get_embedding(text, caller="m3_mem_emb"))
         node_id = self.video_graph.add_text_node(
-            {'contents': [text], 'embeddings': [emb]}, clip_id, 'episodic')
-
-        for name in agent_names:
-            if name in self.agent_nodes:
+            {'contents': [text], 'embeddings': [emb]}, clip_id, node_type)
+        for vid, name in voice_id_to_name.items():
+            if f"<voice_{vid}>" in text and name in self.agent_nodes:
                 self.video_graph.add_edge(node_id, self.agent_nodes[name])
-
-        self.pending_episodic_count += 1
-        if self.pending_episodic_count >= self.SEMANTIC_TRIGGER:
-            self._generate_semantic_memories(clip_id)
-            self.pending_episodic_count = 0
-
         return node_id
 
-    def _generate_semantic_memories(self, clip_id):
-        """Synthesize 1-2 insights from the last SEMANTIC_TRIGGER episodic nodes."""
-        recent_ids = self.video_graph.text_nodes[-self.SEMANTIC_TRIGGER:]
-        texts = []
-        for nid in recent_ids:
-            node = self.video_graph.nodes.get(nid)
-            if node and node.type == 'episodic' and node.metadata.get('contents'):
-                texts.append(node.metadata['contents'][0])
-        if not texts:
-            return
+    def _memorize_clip(self):
+        """Run the two-step GPT-4o memorization on the buffered 30-second clip."""
+        frames = self._clip_frames
+        speech = self._clip_speech
+        clip_id = self._clip_id
 
-        prompt = (
-            f"You are {self.name}. Task: {self.daily_requirement}\n"
-            "Recent experiences:\n" + "\n".join(f"- {t}" for t in texts) +
-            "\n\nGenerate 1-2 concise high-level insights that generalize across these. "
-            "One insight per line, no prefix."
-        )
-        self.logger.debug(f"[m3_semantic_mem] prompt:\n{prompt}")
+        # Build voice_id mapping: agent name -> integer id
+        voice_id_to_name = {i + 1: name for i, name in enumerate(speech.keys())}
+        name_to_voice_id = {name: i for i, name in voice_id_to_name.items()}
+
+        voices_dict = {}
+        for name, utterances in speech.items():
+            vid = name_to_voice_id[name]
+            voices_dict[f"<voice_{vid}>"] = utterances
+
+        # Subsample frames evenly
+        if frames:
+            indices = np.linspace(0, len(frames) - 1, min(self.MAX_FRAMES_PER_CLIP, len(frames)), dtype=int)
+            sampled = [frames[i] for i in indices]
+        else:
+            sampled = []
+
+        voices_json = json.dumps(voices_dict, indent=2)
+
+        # Step 1: episodic descriptions
+        epi_prompt = _PROMPT_CAPTIONS + voices_json
         try:
-            response = self.generator.generate(prompt, caller="m3_semantic_mem")
-            self.logger.debug(f"[m3_semantic_mem] response:\n{response}")
-            for insight in response.strip().split('\n')[:2]:
-                insight = insight.strip()
-                if not insight:
-                    continue
-                emb = np.array(self.generator_embedding.get_embedding(insight, caller="m3_sem_emb"))
-                sem_id = self.video_graph.add_text_node(
-                    {'contents': [insight], 'embeddings': [emb]}, clip_id, 'semantic')
-                for name, char_id in self.agent_nodes.items():
-                    if name in insight:
-                        self.video_graph.add_edge(sem_id, char_id)
+            epi_raw = self.generator.generate(epi_prompt, img=sampled if sampled else None, caller="m3_memorize_epi")
+            self.logger.debug(f"[m3_memorize_epi] clip {clip_id}:\n{epi_raw}")
+            episodic_list = self._parse_str_list(epi_raw)
         except Exception as e:
-            self.logger.warning(f"Semantic memory generation failed: {e}")
+            self.logger.warning(f"Episodic memorization failed for clip {clip_id}: {e}")
+            episodic_list = []
+
+        # Step 2: semantic conclusions
+        sem_prompt = (
+            _PROMPT_THINKINGS + voices_json +
+            "\n\nClip descriptions:\n" + json.dumps(episodic_list, indent=2)
+        )
+        try:
+            sem_raw = self.generator.generate(sem_prompt, img=sampled if sampled else None, caller="m3_memorize_sem")
+            self.logger.debug(f"[m3_memorize_sem] clip {clip_id}:\n{sem_raw}")
+            semantic_list = self._parse_str_list(sem_raw)
+        except Exception as e:
+            self.logger.warning(f"Semantic memorization failed for clip {clip_id}: {e}")
+            semantic_list = []
+
+        for text in episodic_list:
+            self._add_memory_node(text, clip_id, 'episodic', voice_id_to_name)
+        for text in semantic_list:
+            self._add_memory_node(text, clip_id, 'semantic', voice_id_to_name)
+
+        self.logger.info(f"{self.name}: memorized clip {clip_id} — {len(episodic_list)} episodic, {len(semantic_list)} semantic nodes.")
+        self._clip_id += 1
+        self._clip_frames = []
+        self._clip_speech = {}
+        self._clip_start_time = None
+
+    def _parse_str_list(self, text):
+        """Parse a JSON/Python list of strings from LLM output."""
+        start = text.find('[')
+        end = text.rfind(']')
+        if start == -1 or end == -1:
+            return []
+        candidate = text[start:end + 1]
+        try:
+            result = json.loads(candidate)
+        except json.JSONDecodeError:
+            try:
+                result = ast.literal_eval(candidate)
+            except Exception:
+                return []
+        return [s for s in result if isinstance(s, str)]
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
 
@@ -373,9 +446,9 @@ class M3Agent(Agent):
         self.commuting = True
 
         time_str = self.curr_time.strftime('%H:%M') if self.curr_time else "unknown"
-        self._add_episodic_memory(
-            f"At {time_str}, I decided to go to {place_name} to find people to invite.",
-            self.sim_step)
+        thought = f"At {time_str}, I decided to go to {place_name} to find people to invite."
+        emb = np.array(self.generator_embedding.get_embedding(thought, caller="m3_plan_emb"))
+        self.video_graph.add_text_node({'contents': [thought], 'embeddings': [emb]}, self.sim_step, 'episodic')
         self.logger.info(f"{self.name} planned to navigate to {place_name}.")
 
     # ── Observation Processing ────────────────────────────────────────────────
@@ -386,6 +459,14 @@ class M3Agent(Agent):
         self.obs = obs
         self.curr_time = obs['curr_time']
         self.sim_step += 1
+
+        # Initialise clip window on first observation
+        if self._clip_start_time is None:
+            self._clip_start_time = self.curr_time
+
+        # Buffer one frame per step
+        if obs.get('rgb') is not None:
+            self._clip_frames.append(Image.fromarray(obs['rgb']))
 
         # Build nearby_agents unified across GT-seg and non-GT modes
         self.nearby_agents = []
@@ -404,7 +485,6 @@ class M3Agent(Agent):
                     continue
                 if info.get('type') == 'avatar' and info.get('name') != self.name:
                     agent_name = info['name']
-                    # Estimate converse range via depth centroid
                     mask = (seg == seg_id)
                     depth_val = 5.0
                     if obs.get('depth') is not None and mask.any():
@@ -427,7 +507,8 @@ class M3Agent(Agent):
                     self.nearby_agents.append({'name': obj["name"], 'range': dist})
                     self._ensure_character_node(obj["name"])
 
-        # Store speech events as episodic memories
+        # Buffer speech events for the current clip window
+        elapsed = (self.curr_time - self._clip_start_time).total_seconds()
         for event in obs.get('events', []):
             if event.get("type") != "speech":
                 continue
@@ -441,20 +522,19 @@ class M3Agent(Agent):
             utterance = event.get("content", "")
             if isinstance(utterance, dict):
                 utterance = utterance.get("utterance", "")
-            time_str = self.curr_time.strftime('%H:%M') if self.curr_time else "unknown"
-            place = self.current_place or "open space"
             self._ensure_character_node(speaker)
-            self._add_episodic_memory(
-                f"At {time_str}, {speaker} said '{utterance}' at {place}",
-                self.sim_step,
-                agent_names=[speaker])
+            start_mm_ss = f"{int(elapsed // 60):02d}:{int(elapsed % 60):02d}"
+            end_mm_ss = f"{int((elapsed + 1) // 60):02d}:{int((elapsed + 1) % 60):02d}"
+            self._clip_speech.setdefault(speaker, []).append({
+                "start_time": start_mm_ss,
+                "end_time": end_mm_ss,
+                "content": utterance,
+            })
 
-        # Store place-change as memory
-        if self.current_place and self.current_place != self._prev_place:
-            time_str = self.curr_time.strftime('%H:%M') if self.curr_time else "unknown"
-            self._add_episodic_memory(
-                f"At {time_str}, I arrived at {self.current_place}", self.sim_step)
-            self._prev_place = self.current_place
+        # Trigger memorization when the 30-second window closes
+        if elapsed >= self.CLIP_SECONDS:
+            self._memorize_clip()
+        self._prev_place = self.current_place
 
     # ── Action Selection ──────────────────────────────────────────────────────
 
