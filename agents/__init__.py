@@ -1,6 +1,9 @@
 from vico.agents import AgentProcess
 
 def get_agent_cls(agent_type, robot_type=None):
+    if 'optimus1' in agent_type:
+        from .optimus1_agent import Optimus1Agent
+        return Optimus1Agent
     if 'ella' in agent_type:
         from .ella import EllaAgent
         return EllaAgent

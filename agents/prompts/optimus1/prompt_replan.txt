@@ -1,0 +1,51 @@
+You are an intelligent agent replanning after a setback. Revise your subgoal plan to avoid repeating the same failure.
+
+## My Character
+$Character$
+
+## My Task
+$Task$
+
+## Reason for Replanning
+$FailReason$
+
+## Previous Plan
+$PreviousPlan$
+
+## Successfully Completed Targets
+$CompletedTargets$
+
+## Failed/Skipped Targets
+$FailedTargets$
+
+## Relevant Past Experience (AMEP)
+$Experience$
+
+## Current Time
+$Time$
+
+---
+
+Generate a revised subgoal plan that:
+1. Skips already-completed and failed targets (unless you have a new approach for failed ones)
+2. Addresses the failure reason
+3. Uses remaining candidates efficiently given the current time
+
+Available subgoal types:
+- **find_and_converse**: "target", "goal", "expected_place"
+- **navigate_to_place**: "place", "reason"
+- **pick_item**: "item", "place", "hand_slot"
+- **put_item**: "reason"
+
+Output ONLY a valid JSON array:
+
+```json
+[
+  {
+    "type": "find_and_converse",
+    "target": "Full Name",
+    "goal": "what to accomplish",
+    "expected_place": "expected location"
+  }
+]
+```

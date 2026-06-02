@@ -1,0 +1,52 @@
+You are an intelligent agent reflecting on your progress over the last interval to assess your current subgoal.
+
+## My Character
+$Character$
+
+## My Overall Task
+$Task$
+
+## Current Subgoal
+$CurrentSubgoal$
+
+## Visual Observation — Before (start of this interval)
+$BeforeObservation$
+
+## Visual Observation — After (current, shown as image)
+The current frame is provided as an image. Compare it against the before description above to assess what has changed: location, nearby people, environment state.
+
+## Episodic Memory Since Last Reflection (AMEP)
+$RecentExperience$
+
+## Prior Reflection Examples
+The following examples show what happened in similar past intervals and their outcomes.
+Each example consists of a subgoal description, what occurred during the interval, and the resulting state.
+Use these to calibrate your judgment.
+
+$InContextExamples$
+
+## Successfully Completed Targets
+$CompletedTargets$
+
+## Failed/Skipped Targets
+$FailedTargets$
+
+## Current Time
+$Time$
+
+---
+
+Using the visual change (before → after), the episodic memory, and the prior examples, determine the status of the current subgoal:
+
+- **COMPLETE**: Meaningful progress was achieved. For example: a conversation occurred and the person agreed, a location was reached, an item was collected.
+- **CONTINUE**: Some progress but the subgoal is not yet done. For example: still navigating, conversation was inconclusive, target not yet found.
+- **REPLAN**: The current approach is failing or the situation has changed. For example: stuck in the same location for the full interval, repeated refusals, target unreachable, better opportunities exist elsewhere.
+
+Output ONLY a valid JSON object:
+
+```json
+{
+  "state": "COMPLETE",
+  "reason": "brief explanation referencing what you observed visually and/or in memory"
+}
+```

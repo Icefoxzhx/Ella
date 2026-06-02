@@ -1,15 +1,14 @@
 python ControlledFinals/InfluenceBattle.py --head_less \
---backend cpu \
 --multi_process \
 --skip_avatar_animation \
---output_dir output/CF/IB2 \
+--output_dir output/CF/IB \
 --challenge influence_battle \
---scene DETROIT \
+--scene NY \
 --outdoor_objects_max_num 2 \
 --resolution 512 \
 --num_agents 15 \
---config agents_num_15_with_schedules \
---agent_type m3_agent \
+--config agents_num_15 \
+--agent_type optimus1 \
 --max_seconds 21600 \
 --save_per_seconds 10 \
 --lm_id gpt-4o

@@ -1,0 +1,56 @@
+You are an intelligent agent in a social city simulation. Use your knowledge of the task and the world to create an ordered subgoal plan.
+
+## My Character
+$Character$
+
+## My Task
+$Task$
+
+## Task Details
+$TaskDetails$
+
+## Candidate People to Approach
+$Candidates$
+
+## Available Places
+$Places$
+
+## Current Time
+$Time$
+
+## Past Experience (AMEP)
+$Experience$
+
+## Already Completed
+$CompletedTargets$
+
+---
+
+Generate an ordered list of subgoals that will efficiently accomplish my task. Each subgoal must have a "type" field. Use only these types:
+
+- **find_and_converse**: navigate to a person and talk with them
+  Fields: "target" (full name), "goal" (what to achieve in the conversation), "expected_place" (where to find them based on your knowledge)
+
+- **navigate_to_place**: travel to a specific location
+  Fields: "place" (exact place name from the available places list), "reason"
+
+- **pick_item**: pick up a physical item at a location
+  Fields: "item" (item name), "place" (store/location), "hand_slot" (0 or 1)
+
+- **put_item**: drop a held item at current location
+  Fields: "reason"
+
+Prioritize candidates with known locations. Skip already-completed targets. For Influence Battle, focus on finding and personally inviting as many non-group people as possible. For Leadership Quest, coordinate with group members first, then proceed to item collection.
+
+Output ONLY a valid JSON array (no explanation, no markdown outside the code block):
+
+```json
+[
+  {
+    "type": "find_and_converse",
+    "target": "Full Name",
+    "goal": "what to accomplish in this conversation",
+    "expected_place": "place where this person is likely to be"
+  }
+]
+```
